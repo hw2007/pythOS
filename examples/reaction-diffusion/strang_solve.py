@@ -23,8 +23,8 @@ u_prev = Function(V) # u at previous timstep
 D = Constant(0.0005)
 
 dt = 1/10
-tf = 1 # Initial time is locked at zero, this defines final time
-num_steps = int(tf // dt)
+tf = 5 # Initial time is locked at zero, this defines final time
+num_steps = int(tf / dt)
 
 # Define coordinates in mesh
 x, y = SpatialCoordinate(mesh)
@@ -49,6 +49,20 @@ boundary_condition = DirichletBC(V, 0, "on_boundary")
 diffusion_problem = LinearVariationalProblem(a_diffusion, L_diffusion, u, bcs=boundary_condition)
 diffusion_solver = LinearVariationalSolver(diffusion_problem)
 
+def snapshot(i):
+    coords = mesh.coordinates.dat.data_ro
+    cells = mesh.coordinates.cell_node_map().values.reshape(-1, 3)
+
+    triang = tri.Triangulation(coords[:, 0], coords[:, 1], cells)
+    plt.figure()
+    plt.tripcolor(triang, u.dat.data_ro, shading="gouraud")
+    plt.colorbar(label="u value")
+    plt.gca().set_aspect("equal")
+    plt.title(f"Discrete Space at t = {tf / num_steps * i}")
+    plt.savefig(f"graph{i}.png")
+
+snapshot(0)
+
 # Solve !!!
 for step in range(num_steps):
     # Reaction half-step
@@ -63,17 +77,10 @@ for step in range(num_steps):
 
     print(f"Stepped {step}/{num_steps} steps")
 
+    if step % (num_steps // 5) == 0: snapshot(step)
+
 print("DONE! Time to plot...")
 
 # PLOTTING
 
-coords = mesh.coordinates.dat.data_ro
-cells = mesh.coordinates.cell_node_map().values.reshape(-1, 3)
-
-triang = tri.Triangulation(coords[:, 0], coords[:, 1], cells)
-plt.figure()
-plt.tripcolor(triang, u.dat.data_ro, shading="gouraud")
-plt.colorbar(label="u value")
-plt.gca().set_aspect("equal")
-plt.title(f"Discrete Space at t = {tf}")
-plt.savefig("graph.png")
+snapshot(num_steps)
