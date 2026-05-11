@@ -1,7 +1,6 @@
 # Equation: reaction-diffusion, u_t = D delta u + f(u)
 
 from firedrake import *
-import fractional_step
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 import numpy as np
@@ -23,7 +22,7 @@ u_prev = Function(V) # u at previous timstep
 D = Constant(0.0005)
 
 dt = 1/10
-tf = 10 # Initial time is locked at zero, this defines final time
+tf = 1 # Initial time is locked at zero, this defines final time
 num_steps = int(tf // dt)
 
 # Define coordinates in mesh
