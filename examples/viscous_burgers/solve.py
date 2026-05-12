@@ -6,12 +6,12 @@ import matplotlib.animation as anim
 import numpy as np
 import random
 
-SIZE = 100
+SIZE = 500
 LIMITS = (-6, 6)
 dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
 # Viscosity coefficient ν
-VISC = 0.01
+VISC = 0.1
 
 """
 initial_list = []
@@ -27,21 +27,23 @@ y0 = np.exp(-(x**2) / 2)
 
 dt = 1/1000
 t0 = 0
-tf = 1
+tf = 5
 num_steps = int(tf / dt)
 
 # VISC * u_xx
 def viscosity(t, y):
     dydt = np.zeros(SIZE)
+    # dx^2 is used when computing second derivative
     dydt[1:-1] = VISC * (y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
     
     return dydt
 
-# -u * u_x
+# -1/2 * (u^2)_x
 def convection(t, y):
     dydt = np.zeros(SIZE)
-    flux = 0.5 * y**2
-    dydt[1:-1] = -(flux[2:] - flux[:-2]) / (2*dx)
+    convect = -0.5 * y**2
+    # Using 2 * dx because we are comparing points that are 2 cells steps away
+    dydt[1:-1] = (convect[2:] - convect[:-2]) / (2*dx)
 
     return dydt
 
@@ -66,6 +68,50 @@ def snapshot(idx):
 
     plt.savefig(f"graph_{idx}.png")
 
+def save_animation():
+    # Load all rows from CSV
+    with open("results.csv", "r") as f:
+        rows = list(f)
+
+    fig, ax = plt.subplots()
+
+    line, = ax.plot([], [], lw=2)
+
+    ax.set_xlim(LIMITS[0], LIMITS[1])
+    ax.set_ylim(0, 1)
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("u")
+
+    def init():
+        line.set_data([], [])
+        return (line,)
+
+    def update(frame_idx):
+        row = rows[frame_idx]
+
+        data = row.strip().split(",")
+        t = float(data[0])
+        y_vals = np.array([float(v) for v in data[1:]])
+
+        line.set_data(x, y_vals)
+        ax.set_title(f"Discrete Space at t = {t:.3f}")
+
+        return (line,)
+
+    frames = range(0, len(rows), num_steps//(30*20)) # Animation will take 20 seconds
+
+    animation = anim.FuncAnimation(
+        fig,
+        update,
+        frames=frames,
+        init_func=init,
+    )
+
+    animation.save("animation.gif", writer="pillow", fps=30)
+
+    plt.close()
+
 operators = [viscosity, convection]
 methods = {
     (1,): "RK3",
@@ -76,18 +122,13 @@ print("Beginning solve...")
 
 # Solve !!!
 result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname="results.csv")
-print("DONE!")
+print("DONE! Plotting graphs...")
 
 # PLOTTING
 snapshot(0)
-snapshot(1)
-snapshot(2)
-snapshot(3)
-snapshot(4)
-snapshot(5)
-snapshot(10)
-snapshot(20)
 snapshot(num_steps//4)
 snapshot(num_steps//2)
 snapshot(num_steps//4*3)
 snapshot(num_steps)
+print("Creating animation...")
+save_animation()
