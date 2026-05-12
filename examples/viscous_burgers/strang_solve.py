@@ -7,7 +7,7 @@ import numpy as np
 
 SIZE = 100
 
-mesh = UnitSquareMesh(SIZE, SIZE) # Create spatial mesh
+mesh = UnitIntervalMesh(SIZE) # Create spatial mesh
 V = FunctionSpace(mesh, "CG", 1) # "CG" stands for continuous Galerkin
 
 # Create a function that exists in finite space V. Will store the u values from the equation above
@@ -41,7 +41,7 @@ viscosity_problem = LinearVariationalProblem(a_viscosity, L_viscosity, u, bcs=bo
 viscosity_solver = LinearVariationalSolver(viscosity_problem)
 
 # Convective term
-F = (trial_u - u_prev)/(dt/2) * v * dx - 0.5 * trial_u**2 * v.dx(0) * dx # We use dt/2, because this is the term that is applied half twice (Strang splitting)
+F = -1 * u**2 * Dx(v, 0) * dx # We use dt/2, because this is the term that is applied half twice (Strang splitting)
 
 convective_problem = NonlinearVariationalProblem(F, u, bcs=boundary_condition)
 convective_solver = NonlinearVariationalSolver(convective_problem)
@@ -49,14 +49,22 @@ convective_solver = NonlinearVariationalSolver(convective_problem)
 
 def snapshot(i):
     coords = mesh.coordinates.dat.data_ro
-    cells = mesh.coordinates.cell_node_map().values.reshape(-1, 3)
 
-    triang = tri.Triangulation(coords[:, 0], coords[:, 1], cells)
+    # Sort points so the line draws correctly
+    idx = coords.argsort()
+
+    x = coords[idx]
+    y = u.dat.data_ro[idx]
+
     plt.figure()
-    plt.tripcolor(triang, u.dat.data_ro, shading="gouraud")
-    plt.colorbar(label="u value")
-    plt.gca().set_aspect("equal")
+    plt.plot(x, y)
+
+    plt.xlabel("x")
+    plt.ylabel("u")
     plt.title(f"Discrete Space at t = {tf / num_steps * i}")
+
+    plt.grid(True)
+
     plt.savefig(f"graph{i}.png")
 
 snapshot(0)
@@ -78,7 +86,7 @@ for step in range(num_steps):
 
     if step % (num_steps // 5) == 0: snapshot(step)
 
-print("DONE! Time to plot...")
+print("DONE!")
 
 # PLOTTING
 
