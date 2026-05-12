@@ -11,7 +11,7 @@ LIMITS = (-6, 6)
 dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
 # Viscosity coefficient ν
-VISC = 0
+VISC = 0.01
 
 """
 initial_list = []
@@ -33,7 +33,7 @@ num_steps = int(tf / dt)
 # VISC * u_xx
 def viscosity(t, y):
     dydt = np.zeros(SIZE)
-    dydt[1:-1] = (VISC * y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
+    dydt[1:-1] = VISC * (y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
     
     return dydt
 
