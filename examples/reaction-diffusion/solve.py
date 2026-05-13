@@ -1,75 +1,133 @@
 # Equation: reaction-diffusion, u_t = D delta u + f(u)
 
-from firedrake import *
+import fractional_step as fs
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
+import matplotlib.animation as anim
 import numpy as np
+import random
 
-SIZE = 100
+SIZE = 500
+LIMITS = (-20, 20)
+dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
-mesh = UnitSquareMesh(SIZE, SIZE) # Create spatial mesh
-V = FunctionSpace(mesh, "CG", 1) # "CG" stands for continuous Galerkin
+# Diffusion coefficient
+D = 1
 
-# Create a function that exists in finite space V. Will store the u values from the equation above
-u = Function(V)
-u_prev = Function(V) # Solution at previous timestep
+"""
+initial_list = []
+random.seed = 314
+for i in range(SIZE):
+    initial_list.append(random.random())
 
-# Used in the weak form
-v = TestFunction(V)
+y0 = np.array(initial_list)
+"""
 
-u_prev = Function(V) # u at previous timstep
+x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
+#y0 = np.exp(-(x**2) / 2)
+y0 = 1 / (1 + np.exp(x / np.sqrt(6)))**2
 
-D = Constant(0.0005)
+dt = 1/1000
+t0 = 0
+tf = 5
+num_steps = int(tf / dt)
 
-dt = 1/10
-tf = 1 # Initial time is locked at zero, this defines final time
-num_steps = int(tf // dt)
+# D * delta u
+def diffusion(t, y):
+    dydt = np.zeros(SIZE)
+    # dx^2 is used when computing second derivative
+    dydt[1:-1] = D * (y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
+    
+    return dydt
 
-# Define coordinates in mesh
-x, y = SpatialCoordinate(mesh)
+# u(1 - u)
+def reaction(t, y):
+    dydt = np.zeros(SIZE)
+    dydt = y * (1 - y)
 
-# Initial condition
-#u0 = exp(-SIZE * ((x - 0.5)**2 + (y - 0.5)**2)) # Creates a smooth "bump" in the centre of the mesh
-# Load initial condition into the space
-#u.interpolate(u0)
+    return dydt
 
-# Begin with random noise
-np.random.seed(314)
-u.dat.data[:] = 0.1 * np.random.randn(len(u.dat.data))
+def snapshot(idx):
+    def get_snapshot(fname, idx):
+        f = open(fname, 'r')
+        row = list(f)[idx]
+        data = row.strip().split(",")[1:] # First value is time, dont use that one
+        f.close()
 
-# function for f(u).
-def fu(u):
-    return u - u**3
+        return [float(i) for i in data]
 
-# Weak form of the equation. I am not totally sure what this means yet, was taken from online.
-weak = (
-    (u - u_prev) / dt * v * dx
-    + D * dot(grad(u), grad(v)) * dx
-    - fu(u) * v * dx
-)
+    y_vals = get_snapshot("results.csv", idx)
 
-boundary_condition = DirichletBC(V, 0, "on_boundary")
+    # Plot it!
+    plt.figure()
+    plt.plot(x, y_vals)
+    plt.xlabel("x")
+    plt.ylabel("u")
+    plt.ylim(0, 1)
+    plt.title(f"Discrete Space at t = {idx / num_steps * (tf-t0)}")
 
-problem = NonlinearVariationalProblem(weak, u, bcs=boundary_condition)
-solver = NonlinearVariationalSolver(problem)
+    plt.savefig(f"graph_{idx}.png")
+
+def save_animation():
+    # Load all rows from CSV
+    with open("results.csv", "r") as f:
+        rows = list(f)
+
+    fig, ax = plt.subplots()
+
+    line, = ax.plot([], [], lw=2)
+
+    ax.set_xlim(LIMITS[0], LIMITS[1])
+    ax.set_ylim(0, 1)
+
+    ax.set_xlabel("x")
+    ax.set_ylabel("u")
+
+    def init():
+        line.set_data([], [])
+        return (line,)
+
+    def update(frame_idx):
+        row = rows[frame_idx]
+
+        data = row.strip().split(",")
+        t = float(data[0])
+        y_vals = np.array([float(v) for v in data[1:]])
+
+        line.set_data(x, y_vals)
+        ax.set_title(f"Discrete Space at t = {t:.3f}")
+
+        return (line,)
+
+    frames = range(0, len(rows), num_steps//(30*20)) # Animation will take 20 seconds
+
+    animation = anim.FuncAnimation(
+        fig,
+        update,
+        frames=frames,
+        init_func=init,
+    )
+
+    animation.save("animation.gif", writer="pillow", fps=30)
+
+    plt.close()
+
+operators = [reaction, diffusion]
+methods = {
+    (1,): "RK3",
+    (2,): "RK3"
+}
+
+print("Beginning solve...")
 
 # Solve !!!
-for step in range(num_steps):
-    u_prev.assign(u) # Make prev state the same as current state
-    solver.solve() # Perform the function
-    print(f"Stepped {step}/{num_steps} steps")
-
-print("DONE! Time to plot...")
+result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname="results.csv")
+print("DONE! Plotting graphs...")
 
 # PLOTTING
-
-coords = mesh.coordinates.dat.data_ro
-cells = mesh.coordinates.cell_node_map().values.reshape(-1, 3)
-
-triang = tri.Triangulation(coords[:, 0], coords[:, 1], cells)
-plt.figure()
-plt.tripcolor(triang, u.dat.data_ro, shading="gouraud")
-plt.colorbar(label="u value")
-plt.gca().set_aspect("equal")
-plt.title(f"Discrete Space at t = {tf}")
-plt.savefig("graph.png")
+snapshot(0)
+snapshot(num_steps//4)
+snapshot(num_steps//2)
+snapshot(num_steps//4*3)
+snapshot(num_steps)
+print("Creating animation...")
+save_animation()
