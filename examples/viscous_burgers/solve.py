@@ -112,7 +112,7 @@ def save_animation():
 
     plt.close()
 
-operators = [viscosity, convection]
+operators = [convection, viscosity]
 methods = {
     (1,): "RK3",
     (2,): "RK3"
