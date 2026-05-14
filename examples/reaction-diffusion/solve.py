@@ -46,7 +46,7 @@ def reaction(t, y):
 
     return dydt
 
-def snapshot(idx):
+def snapshot(idx, csv_file):
     def get_snapshot(fname, idx):
         f = open(fname, 'r')
         row = list(f)[idx]
@@ -55,7 +55,7 @@ def snapshot(idx):
 
         return [float(i) for i in data]
 
-    y_vals = get_snapshot("results.csv", idx)
+    y_vals = get_snapshot(csv_file, idx)
 
     # Plot it!
     plt.figure()
@@ -67,9 +67,9 @@ def snapshot(idx):
 
     plt.savefig(f"graph_{idx}.png")
 
-def save_animation():
+def save_animation(csv_file):
     # Load all rows from CSV
-    with open("results.csv", "r") as f:
+    with open(csv_file, "r") as f:
         rows = list(f)
 
     fig, ax = plt.subplots()
@@ -111,23 +111,30 @@ def save_animation():
 
     plt.close()
 
-operators = [reaction, diffusion]
-methods = {
-    (1,): "RK3",
-    (2,): "RK3"
-}
+def solve(fname: str):
+    operators = [reaction, diffusion]
+    methods = {
+        (1,): "RK3",
+        (2,): "RK3"
+    }
 
-print("Beginning solve...")
+    print("Beginning solve...")
 
-# Solve !!!
-result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname="results.csv")
-print("DONE! Plotting graphs...")
+    # Solve !!!
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
+    print("DONE!")
 
-# PLOTTING
-snapshot(0)
-snapshot(num_steps//4)
-snapshot(num_steps//2)
-snapshot(num_steps//4*3)
-snapshot(num_steps)
-print("Creating animation...")
-save_animation()
+def plot(fname: str):
+    # PLOTTING
+    print("Plotting...")
+    snapshot(0, fname)
+    snapshot(num_steps//4, fname)
+    snapshot(num_steps//2, fname)
+    snapshot(num_steps//4*3, fname)
+    snapshot(num_steps, fname)
+    print("Creating animation...")
+    save_animation(fname)
+
+if __name__ == "__main__":
+    solve("results.csv")
+    plot("results.csv")
