@@ -11,24 +11,7 @@ LIMITS = (-6, 6)
 dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
 # Viscosity coefficient ν
-VISC = 0.1
-
-"""
-initial_list = []
-random.seed = 314
-for i in range(SIZE):
-    initial_list.append(random.random())
-
-y0 = np.array(initial_list)
-"""
-
-x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
-y0 = np.exp(-(x**2) / 2)
-
-dt = 1/1000
-t0 = 0
-tf = 5
-num_steps = int(tf / dt)
+VISC = 0.01
 
 # VISC * u_xx
 def viscosity(t, y):
@@ -112,7 +95,16 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname: str):
+def solve(fname="results.csv", size=500, dt=1/1000, tf=5):
+    SIZE = size
+    dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
+
+    x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
+    y0 = np.exp(-(x**2) / 2)
+
+    t0 = 0
+    num_steps = int(tf / dt)
+
     operators = [convection, viscosity]
     methods = {
         (1,): "RK3",
@@ -125,7 +117,7 @@ def solve(fname: str):
     result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
     print("DONE!")
 
-def plot(fname: str):
+def plot(fname="results.csv"):
     # PLOTTING
     print("Plotting...")
     snapshot(0, fname)
@@ -137,5 +129,5 @@ def plot(fname: str):
     save_animation(fname)
 
 if __name__ == "__main__":
-    solve("results.csv")
-    plot("results.csv")
+    solve()
+    plot()
