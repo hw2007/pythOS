@@ -4,14 +4,18 @@ import fractional_step as fs
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
-import random
 
-SIZE = 500
+
+# Temporary values
+SIZE = 0
+dx = 0
+
 LIMITS = (-6, 6)
-dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
 # Viscosity coefficient ν
 VISC = 0.01
+
+num_steps = 0 # temporary value
 
 # VISC * u_xx
 def viscosity(t, y):
@@ -96,6 +100,8 @@ def save_animation(csv_file):
     plt.close()
 
 def solve(fname="results.csv", size=500, dt=1/1000, tf=5):
+    global SIZE, dx, x, num_steps
+
     SIZE = size
     dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
@@ -111,11 +117,9 @@ def solve(fname="results.csv", size=500, dt=1/1000, tf=5):
         (2,): "RK3"
     }
 
-    print("Beginning solve...")
-
     # Solve !!!
     result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
-    print("DONE!")
+    return result
 
 def plot(fname="results.csv"):
     # PLOTTING
@@ -129,5 +133,7 @@ def plot(fname="results.csv"):
     save_animation(fname)
 
 if __name__ == "__main__":
+    print("Beginning solve...")
     solve()
+    print("DONE!")
     plot()
