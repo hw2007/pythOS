@@ -91,15 +91,15 @@ if "--plot" in args:
     dt_error = []
     for trial in dt_study:
         diff = ref - trial
-        error = np.sqrt(np.sum(diff**2) * dx_ref)
-        dt_error.append(float(error))
+        error = np.sqrt(np.sum(diff**2) * dx_ref) / np.sqrt(np.sum(ref**2) * dx_ref)
+        dt_error.append(float(error) * 100) # Append the %error
     
     # Plot it!
     plt.figure()
     plt.axhline(y=0, color="orange", linestyle="--")
     plt.plot(dt_values, dt_error)
     plt.xlabel("1/dt")
-    plt.ylabel("Error")
+    plt.ylabel("percent error")
     plt.title("Convergence plot for dt")
 
     plt.savefig(f"dt_plot.png")
