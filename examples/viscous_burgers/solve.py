@@ -8,7 +8,9 @@ import numpy as np
 
 # Temporary values
 SIZE = 0
-dx = 0
+DX = 0
+
+TF = 1
 
 LIMITS = (-6, 6)
 
@@ -21,7 +23,7 @@ num_steps = 0 # temporary value
 def viscosity(t, y):
     dydt = np.zeros(SIZE)
     # dx^2 is used when computing second derivative
-    dydt[1:-1] = VISC * (y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
+    dydt[1:-1] = VISC * (y[2:] - 2*y[1:-1] + y[:-2]) / DX**2
     
     return dydt
 
@@ -30,7 +32,7 @@ def convection(t, y):
     dydt = np.zeros(SIZE)
     convect = -0.5 * y**2
     # Using 2 * dx because we are comparing points that are 2 cells steps away
-    dydt[1:-1] = (convect[2:] - convect[:-2]) / (2*dx)
+    dydt[1:-1] = (convect[2:] - convect[:-2]) / (2*DX)
 
     return dydt
 
@@ -51,7 +53,7 @@ def snapshot(idx, csv_file):
     plt.xlabel("x")
     plt.ylabel("u")
     plt.ylim(0, 1)
-    plt.title(f"Discrete Space at t = {idx / num_steps * (tf-t0)}")
+    plt.title(f"Discrete Space at t = {idx / num_steps * (TF)}")
 
     plt.savefig(f"graph_{idx}.png")
 
@@ -99,16 +101,20 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", size=500, dt=1/1000, tf=5):
-    global SIZE, dx, x, num_steps
+def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False):
+    if save_result: filename = None
+    else: filename = fname
 
-    SIZE = size
-    dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
+    global SIZE, DX, x, num_steps, TF
+
+    DX = dx
+    SIZE = int((LIMITS[1] - LIMITS[0]) / DX)
 
     x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
     y0 = np.exp(-(x**2) / 2)
 
     t0 = 0
+    TF = tf
     num_steps = int(tf / dt)
 
     operators = [convection, viscosity]
@@ -118,7 +124,16 @@ def solve(fname="results.csv", size=500, dt=1/1000, tf=5):
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=filename)
+    
+    if save_result:
+        file = open(fname, "w")
+        string = result[0]
+        for i in result[1:]:
+            string = f"{string},{i}"
+        file.write(string + "\n")
+        file.close()
+
     return result
 
 def plot(fname="results.csv"):
