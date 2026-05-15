@@ -7,17 +7,18 @@ import numpy as np
 
 
 # Temporary values
-SIZE = 0
-DX = 0
+SIZE = 0 # num of points in space. Gets calculated when solve() is called.
+DX = 0 # space between points. Passed to solve() and then set.
 
-TF = 1
+TF = 1 # Final time. Will be set by solve()
 
+# Min and max values of space
 LIMITS = (-6, 6)
 
 # Viscosity coefficient ν
 VISC = 0.01
 
-num_steps = 0 # temporary value
+num_steps = 0 # Will be calculated when solve() is called
 
 # VISC * u_xx
 def viscosity(t, y):
@@ -36,7 +37,11 @@ def convection(t, y):
 
     return dydt
 
+# Plot one single state of the sim
 def snapshot(idx, csv_file):
+    # idx: timestep to snapshot
+    # csv_file: file to pull data from
+    # Get the data from a timestep index
     def get_snapshot(fname, idx):
         f = open(fname, 'r')
         row = list(f)[idx]
@@ -58,6 +63,9 @@ def snapshot(idx, csv_file):
     plt.savefig(f"graph_{idx}.png")
 
 def save_animation(csv_file):
+    # Animate through the whole simulation in a gif
+    # csv_file: file to pull data from
+
     # Load all rows from CSV
     with open(csv_file, "r") as f:
         rows = list(f)
@@ -102,17 +110,23 @@ def save_animation(csv_file):
     plt.close()
 
 def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False):
+    # Solve the PDE!
+    # save_result: if True, only save the last step in the simulation. Otherwise save everything.
+        
+    global SIZE, DX, x, num_steps, TF
+
     if save_result: filename = None
     else: filename = fname
 
-    global SIZE, DX, x, num_steps, TF
-
+    # Configure discrete space
     DX = dx
     SIZE = int((LIMITS[1] - LIMITS[0]) / DX)
 
+    # Create gaussian bump
     x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
     y0 = np.exp(-(x**2) / 2)
-
+    
+    # Configure timestepping
     t0 = 0
     TF = tf
     num_steps = int(tf / dt)
