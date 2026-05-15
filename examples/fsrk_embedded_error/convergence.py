@@ -26,9 +26,9 @@ dt_step = 100
 
 if "--sim" in args:
     if "vb" in args:
-        import viscous_burgers/solve as solver
+        from viscous_burgers import solve as solver
     elif "rd" in args:
-        import reaction-diffusion/solve as solver
+        from reaction_diffusion import solve as solver
 
     print("=== Generating reference ===")
     solver.solve(fname="reference.csv", dx=1/dx_ref, dt=1/dt_ref, tf=tf, save_result=True)
