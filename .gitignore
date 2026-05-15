@@ -1,2 +1,3 @@
-examples/*.csv
-examples/*.png
+examples/*/*.csv
+examples/*/*.png
+examples/*/*.gif
