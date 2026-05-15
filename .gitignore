@@ -1,4 +1,7 @@
-examples/*/*.csv
-examples/*/*.png
-examples/*/*.gif
+examples/fsrk_embedded_error/*/*.csv
+examples/fsrk_embedded_error/*/*.png
+examples/fsrk_embedded_error/*/*.gif
+examples/fsrk_embedded_error/*.csv
+examples/fsrk_embedded_error/*.png
+examples/fsrk_embedded_error/*.gif
 __pycache__
