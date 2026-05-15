@@ -25,13 +25,17 @@ tf = 5
 dt_step = 100
 
 if "--sim" in args:
-    import solve as vb
+    if "vb" in args:
+        import viscous_burgers/solve as solver
+    elif "rd" in args:
+        import reaction-diffusion/solve as solver
 
     print("=== Generating reference ===")
-    vb.solve(fname="reference.csv", dx=1/dx_ref, dt=1/dt_ref, tf=tf, save_result=True)
+    solver.solve(fname="reference.csv", dx=1/dx_ref, dt=1/dt_ref, tf=tf, save_result=True)
     print("Done!")
 
     def write_file(fname, states):
+        # Writes results of all trials to a file
         file = open(fname, "w")
         for state in states:
             string = state[0]
@@ -40,21 +44,24 @@ if "--sim" in args:
             file.write(string + "\n")
         file.close()
 
-    print("=== Beginning time study ===")
+    print("=== Beginning trials ===")
 
     final_states = []
     dx = 1/dx_ref
     for dt_inverse in range(dt_0, dt_f+1, dt_step):
         dt = 1/dt_inverse
         print(f"Trial with dx={dx}, dt={dt}")
-        result = vb.solve(fname=None, dx=dx, dt=dt, tf=tf)
+        # Solve PDE for this dt value
+        result = vb.solve(fname=None, dx=dx, dt=dt, tf=tf) 
+        # If this condition is false, then the solve blew up to infinity due to a large dt
         if not np.any(np.isnan(result)):
-            dt_marker = np.array([dt_inverse])
+            dt_marker = np.array([dt_inverse]) # Put the inverse dt & the result together so they can be plotted later
             final_states.append(np.concatenate((dt_marker, result)))
         else:
-            print("Error, values likely too small.")
+            print("Error, dt is likely too large.")
     
-    write_file("dt_study.csv", final_states)
+    # Save trials results
+    write_file("dt_trials.csv", final_states)
 
 if "--plot" in args:
     def get_ref_data():
@@ -68,26 +75,28 @@ if "--plot" in args:
 
         return ref_data
 
-    def get_study_data(fname):
-        # Returns test values e.g. dt, results
+    def get_trial_results(fname):
+        # Returns dt values, results
 
         study = open(fname, "r") # Open file where study data is stored
 
         values = [] # Where the test values will be stored, e.g. dt for each trial
-        study_data = []
+        results = []
         for t in study:
-            trial_strings = t.rstrip().split(",")
-            trial_floats = [float(i) for i in trial_strings]
-            values.append(trial_floats[0])
-
+            trial_strings = t.rstrip().split(",") # Get each entry in the line
+            trial_floats = [float(i) for i in trial_strings] # Convert to floats
+            values.append(trial_floats[0]) # Get dt as float
+            
+            # Get the result of the trial
             trial_data = np.array(trial_floats[1:])
-            study_data.append(trial_data)
+            results.append(trial_data)
         
-        return values, study_data
+        return values, results
     
     ref = get_ref_data()
-    dt_values, dt_study = get_study_data("dt_study.csv")
-
+    dt_values, results = get_study_data("dt_trials.csv")
+    
+    # Calculate relative L2 error for each trial (comparing to reference)
     dt_error = []
     for trial in dt_study:
         diff = ref - trial
@@ -96,7 +105,7 @@ if "--plot" in args:
     
     # Plot it!
     plt.figure()
-    plt.axhline(y=0, color="orange", linestyle="--")
+    plt.axhline(y=0, color="orange", linestyle="--") # draw a zero line
     plt.plot(dt_values, dt_error)
     plt.xlabel("1/dt")
     plt.ylabel("percent error")
