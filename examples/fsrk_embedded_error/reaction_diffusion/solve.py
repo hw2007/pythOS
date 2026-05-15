@@ -107,7 +107,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=0.08, dt=1/1000, tf=5, save_result=False):
+def solve(fname="results.csv", dx=0.05, dt=1/10000, tf=5, save_result=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         

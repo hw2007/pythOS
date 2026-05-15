@@ -11,18 +11,18 @@ args = sys.argv[1:]
 # IMPORTANT: All dx & dt values below must be give as inverses. So if you want a dx of 1/100, enter 100.
 
 # Worst value to try
-dt_0 = 100
+dt_0 = 2000
 
-dx_ref = 100
+dx_ref = 20
 dt_ref = 100000
 
 # Best value to try (should be <= to reference value)
-dt_f = 5000
+dt_f = 50000
 
 # t value to stop sim at
 tf = 5
 
-dt_step = 100
+dt_step = 1000
 
 if "--sim" in args:
     if "vb" in args:
@@ -52,7 +52,7 @@ if "--sim" in args:
         dt = 1/dt_inverse
         print(f"Trial with dx={dx}, dt={dt}")
         # Solve PDE for this dt value
-        result = vb.solve(fname=None, dx=dx, dt=dt, tf=tf) 
+        result = solver.solve(fname=None, dx=dx, dt=dt, tf=tf) 
         # If this condition is false, then the solve blew up to infinity due to a large dt
         if not np.any(np.isnan(result)):
             dt_marker = np.array([dt_inverse]) # Put the inverse dt & the result together so they can be plotted later
@@ -94,11 +94,11 @@ if "--plot" in args:
         return values, results
     
     ref = get_ref_data()
-    dt_values, results = get_study_data("dt_trials.csv")
+    dt_values, results = get_trial_results("dt_trials.csv")
     
     # Calculate relative L2 error for each trial (comparing to reference)
     dt_error = []
-    for trial in dt_study:
+    for trial in results:
         diff = ref - trial
         error = np.sqrt(np.sum(diff**2) * dx_ref) / np.sqrt(np.sum(ref**2) * dx_ref)
         dt_error.append(float(error) * 100) # Append the %error
