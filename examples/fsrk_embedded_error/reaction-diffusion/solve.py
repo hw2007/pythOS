@@ -4,38 +4,27 @@ import fractional_step as fs
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
-import random
 
-SIZE = 500
+
+# Temporary values
+SIZE = 0 # num of points in space. Gets calculated when solve() is called.
+DX = 0 # space between points. Passed to solve() and then set.
+
+TF = 1 # Final time. Will be set by solve()
+
+# Min and max values of space
 LIMITS = (-20, 20)
-dx = (LIMITS[1] - LIMITS[0]) / (SIZE-1)
 
 # Diffusion coefficient
 D = 1
 
-"""
-initial_list = []
-random.seed = 314
-for i in range(SIZE):
-    initial_list.append(random.random())
-
-y0 = np.array(initial_list)
-"""
-
-x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
-#y0 = np.exp(-(x**2) / 2)
-y0 = 1 / (1 + np.exp(x / np.sqrt(6)))**2
-
-dt = 1/1000
-t0 = 0
-tf = 5
-num_steps = int(tf / dt)
+num_steps = 0 # Will be calculated when solve() is called
 
 # D * delta u
 def diffusion(t, y):
     dydt = np.zeros(SIZE)
     # dx^2 is used when computing second derivative
-    dydt[1:-1] = D * (y[2:] - 2*y[1:-1] + y[:-2]) / dx**2
+    dydt[1:-1] = D * (y[2:] - 2*y[1:-1] + y[:-2]) / DX**2
     
     return dydt
 
@@ -46,7 +35,11 @@ def reaction(t, y):
 
     return dydt
 
+# Plot one single state of the sim
 def snapshot(idx, csv_file):
+    # idx: timestep to snapshot
+    # csv_file: file to pull data from
+    # Get the data from a timestep index
     def get_snapshot(fname, idx):
         f = open(fname, 'r')
         row = list(f)[idx]
@@ -63,11 +56,14 @@ def snapshot(idx, csv_file):
     plt.xlabel("x")
     plt.ylabel("u")
     plt.ylim(0, 1)
-    plt.title(f"Discrete Space at t = {idx / num_steps * (tf-t0)}")
+    plt.title(f"Discrete Space at t = {idx / num_steps * (TF)}")
 
     plt.savefig(f"graph_{idx}.png")
 
 def save_animation(csv_file):
+    # Animate through the whole simulation in a gif
+    # csv_file: file to pull data from
+
     # Load all rows from CSV
     with open(csv_file, "r") as f:
         rows = list(f)
@@ -111,20 +107,48 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname: str):
+def solve(fname="results.csv", dx=0.08, dt=1/1000, tf=5, save_result=False):
+    # Solve the PDE!
+    # save_result: if True, only save the last step in the simulation. Otherwise save everything.
+        
+    global SIZE, DX, x, num_steps, TF
+
+    if save_result: filename = None
+    else: filename = fname
+
+    # Configure discrete space
+    DX = dx
+    SIZE = int((LIMITS[1] - LIMITS[0]) / DX)
+
+    # Create wavefront
+    x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
+    y0 = 1 / (1 + np.exp(x / np.sqrt(6)))**2
+    
+    # Configure timestepping
+    t0 = 0
+    TF = tf
+    num_steps = int(tf / dt)
+
     operators = [reaction, diffusion]
     methods = {
         (1,): "RK3",
         (2,): "RK3"
     }
 
-    print("Beginning solve...")
-
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
-    print("DONE!")
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=filename)
+    
+    if save_result:
+        file = open(fname, "w")
+        string = result[0]
+        for i in result[1:]:
+            string = f"{string},{i}"
+        file.write(string + "\n")
+        file.close()
 
-def plot(fname: str):
+    return result
+
+def plot(fname="results.csv"):
     # PLOTTING
     print("Plotting...")
     snapshot(0, fname)
@@ -136,5 +160,7 @@ def plot(fname: str):
     save_animation(fname)
 
 if __name__ == "__main__":
-    solve("results.csv")
-    plot("results.csv")
+    print("Beginning solve...")
+    solve()
+    print("DONE!")
+    plot()
