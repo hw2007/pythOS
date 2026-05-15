@@ -1,3 +1,4 @@
 examples/*/*.csv
 examples/*/*.png
 examples/*/*.gif
+__pycache__
