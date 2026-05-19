@@ -8,21 +8,16 @@ import numpy as np
 
 args = sys.argv[1:]
 
-# IMPORTANT: All dx & dt values below must be give as inverses. So if you want a dx of 1/100, enter 100.
+k0 = 4
 
-# Worst value to try
-dt_0 = 2000
+# Reference values
+dx_ref = 1/20
+dt_ref = 2 ** (-18)
 
-dx_ref = 20
-dt_ref = 100000
-
-# Best value to try (should be <= to reference value)
-dt_f = 50000
+k_f = 16 # Final dt value will be 2^(-k_f)
 
 # t value to stop sim at
-tf = 5
-
-dt_step = 1000
+tf = 1
 
 if "--sim" in args:
     if "vb" in args:
@@ -31,7 +26,7 @@ if "--sim" in args:
         from reaction_diffusion import solve as solver
 
     print("=== Generating reference ===")
-    solver.solve(fname="reference.csv", dx=1/dx_ref, dt=1/dt_ref, tf=tf, save_result=True)
+    solver.solve(fname="reference.csv", dx=dx_ref, dt=dt_ref, tf=tf, save_result=True)
     print("Done!")
 
     def write_file(fname, states):
@@ -47,15 +42,15 @@ if "--sim" in args:
     print("=== Beginning trials ===")
 
     final_states = []
-    dx = 1/dx_ref
-    for dt_inverse in range(dt_0, dt_f+1, dt_step):
-        dt = 1/dt_inverse
+    dx = dx_ref
+    for k in range(k0, k_f):
+        dt = 2 ** (-k)
         print(f"Trial with dx={dx}, dt={dt}")
         # Solve PDE for this dt value
         result = solver.solve(fname=None, dx=dx, dt=dt, tf=tf) 
         # If this condition is false, then the solve blew up to infinity due to a large dt
         if not np.any(np.isnan(result)):
-            dt_marker = np.array([dt_inverse]) # Put the inverse dt & the result together so they can be plotted later
+            dt_marker = np.array([dt]) # Put the inverse dt & the result together so they can be plotted later
             final_states.append(np.concatenate((dt_marker, result)))
         else:
             print("Error, dt is likely too large.")
@@ -107,7 +102,7 @@ if "--plot" in args:
     plt.figure()
     plt.axhline(y=0, color="orange", linestyle="--") # draw a zero line
     plt.plot(dt_values, dt_error)
-    plt.xlabel("1/dt")
+    plt.xlabel("dt")
     plt.ylabel("percent error")
     plt.title("Convergence plot for dt")
 
