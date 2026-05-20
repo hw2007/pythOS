@@ -3,10 +3,8 @@
 # Pass --result-only to only save the final result (not each step in time)
 
 import fractional_step as fs
-import math
 import time
-import sys
-import rk4
+import methods as m
 
 def solve(t0, tf, dt, fname="results.csv"):
     # Initial condition
@@ -18,10 +16,10 @@ def solve(t0, tf, dt, fname="results.csv"):
 
     operators = [operator1]
     methods = {
-        (0,): rk4.rk4_method
+        (0,): m.bogacki_shampine
     }
 
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=fname)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, os_rtol=1e-5, os_atol=1e-8, fname=fname)
     
     return result
 

@@ -9,10 +9,10 @@ import math
 
 args = sys.argv[1:]
 
-k_f = 18 # Final dt value will be 2^(-k_f)
+k_f = 12 # Final dt value will be 2^(-k_f)
 
 # t value to stop sim at
-tf = 10
+tf = 1
 
 
 if "--sim" in args:
@@ -79,11 +79,17 @@ if "--plot" in args:
     plt.figure()
     plt.plot(log_dt, log_error)
 
-    # Reference line: y = 4x
+    # Reference lines
     x_ref = np.linspace(min(log_dt), max(log_dt), 100)
-    y_ref = 4 * x_ref + 10
+    y_slope_4 = 4 * x_ref
+    y_slope_3 = 3 * x_ref
+    y_slope_2 = 2 * x_ref
+    y_slope_1 = 1 * x_ref
 
-    plt.plot(x_ref, y_ref, "--", label="Slope = 4")
+    plt.plot(x_ref, y_slope_4, "--", color="red", label="Slope = 4")
+    plt.plot(x_ref, y_slope_3, "--", color="orange", label="Slope = 3")
+    plt.plot(x_ref, y_slope_2, "--", color="yellow", label="Slope = 2")
+    plt.plot(x_ref, y_slope_1, "--", color="green", label="Slope = 1")
 
     plt.xlabel("log2(dt)")
     plt.ylabel("log2(error)")
