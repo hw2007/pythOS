@@ -4,6 +4,8 @@ import fractional_step as fs
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
+import time
+import methods as m
 
 
 # Temporary values
@@ -94,7 +96,7 @@ def save_animation(csv_file):
 
         return (line,)
 
-    frames = range(0, len(rows), num_steps//(30*20)) # Animation will take 20 seconds
+    frames = range(0, len(rows), 1) # Animation will take 20 seconds
 
     animation = anim.FuncAnimation(
         fig,
@@ -107,7 +109,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=0.05, dt=1/10000, tf=5, save_result=False):
+def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -129,14 +131,13 @@ def solve(fname="results.csv", dx=0.05, dt=1/10000, tf=5, save_result=False):
     TF = tf
     num_steps = int(tf / dt)
 
-    operators = [reaction, diffusion]
+    operators = [diffusion, reaction]
     methods = {
-        (1,): "RK3",
-        (2,): "RK3"
+        (1,): "ADAPTIVE"
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=filename)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods={1: (m.heun_fe, 1e-5, 1e-8), 2: (m.sd2_be, 1e-5, 1e-8)}, fname=filename)
     
     if save_result:
         file = open(fname, "w")
@@ -161,6 +162,8 @@ def plot(fname="results.csv"):
 
 if __name__ == "__main__":
     print("Beginning solve...")
+    start_time = time.perf_counter()
     solve()
-    print("DONE!")
+    end_time = time.perf_counter()
+    print(f"DONE! Solved in {end_time - start_time} seconds.")
     plot()
