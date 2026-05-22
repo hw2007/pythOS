@@ -5,3 +5,5 @@ examples/fsrk_embedded_error/*.csv
 examples/fsrk_embedded_error/*.png
 examples/fsrk_embedded_error/*.gif
 __pycache__
+Makefile
+sundials_wrapper.so
