@@ -133,11 +133,15 @@ def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False):
 
     operators = [diffusion, reaction]
     methods = {
-        (1,): "ADAPTIVE"
+        (0,): "ADAPTIVE"
+    }
+    ivp_methods = {
+        1: (m.heun_fe, 1e-5, 1e-8),
+        2: (m.sd2_be, 1e-5, 1e-8)
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods={1: (m.heun_fe, 1e-5, 1e-8), 2: (m.sd2_be, 1e-5, 1e-8)}, fname=filename)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods=ivp_methods, fname=filename)
     
     if save_result:
         file = open(fname, "w")

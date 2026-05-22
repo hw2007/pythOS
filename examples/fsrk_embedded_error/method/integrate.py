@@ -16,7 +16,7 @@ def solve(t0, tf, dt, fname="results.csv"):
 
     operators = [operator1]
     methods = {
-        (0,): m.bogacki_shampine
+        (0,): "RK3"
     }
 
     result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, os_rtol=1e-5, os_atol=1e-8, fname=fname)
