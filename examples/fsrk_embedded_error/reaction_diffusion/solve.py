@@ -109,7 +109,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False):
+def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False, adaptive=True):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -132,12 +132,17 @@ def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False):
     num_steps = int(tf / dt)
 
     operators = [diffusion, reaction]
-    methods = {
-        (0,): "ADAPTIVE"
-    }
+    if adaptive:
+        methods = {
+            (0,): "ADAPTIVE"
+        }
+    else:
+        methods = {
+            (0,): "RK3"
+        }
     ivp_methods = {
-        1: (m.heun_fe, 1e-5, 1e-8),
-        2: (m.sd2_be, 1e-5, 1e-8)
+        1: (m.heun_fe, 1e-4, 1e-6),
+        2: (m.sd2_be, 1e-4, 1e-6)
     }
 
     # Solve !!!

@@ -4,6 +4,7 @@ import fractional_step as fs
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
+import methods as m
 
 
 # Temporary values
@@ -109,7 +110,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False):
+def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False, adaptive=True):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -131,14 +132,22 @@ def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False):
     TF = tf
     num_steps = int(tf / dt)
 
-    operators = [convection, viscosity]
-    methods = {
-        (1,): "RK3",
-        (2,): "RK3"
+    operators = [viscosity, convection]
+    if adaptive:
+        methods = {
+            (0,): "ADAPTIVE"
+        }
+    else:
+        methods = {
+            (0,): "RK3"
+        }
+    ivp_methods = {
+        1: (m.heun_fe, 1e-4, 1e-6),
+        2: (m.sd2_be, 1e-4, 1e-6)
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, fname=filename)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods=ivp_methods, fname=filename)
     
     if save_result:
         file = open(fname, "w")

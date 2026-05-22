@@ -8,11 +8,11 @@ import numpy as np
 
 args = sys.argv[1:]
 
-k0 = 4
+k0 = 8
 
 # Reference values
 dx_ref = 1/20
-dt_ref = 2 ** (-18)
+dt_ref = 2 ** (-20)
 
 k_f = 16 # Final dt value will be 2^(-k_f)
 
@@ -26,7 +26,7 @@ if "--sim" in args:
         from reaction_diffusion import solve as solver
 
     print("=== Generating reference ===")
-    solver.solve(fname="reference.csv", dx=dx_ref, dt=dt_ref, tf=tf, save_result=True)
+    solver.solve(fname="reference.csv", dx=dx_ref, dt=dt_ref, tf=tf, save_result=True, adaptive=False)
     print("Done!")
 
     def write_file(fname, states):
@@ -95,15 +95,15 @@ if "--plot" in args:
     dt_error = []
     for trial in results:
         diff = ref - trial
-        error = np.sqrt(np.sum(diff**2) * dx_ref) / np.sqrt(np.sum(ref**2) * dx_ref)
-        dt_error.append(float(error) * 100) # Append the %error
+        error = np.max(diff) # Take the highest error value btwn the two discrete spaces
+        dt_error.append(error)
     
     # Plot it!
     plt.figure()
     plt.axhline(y=0, color="orange", linestyle="--") # draw a zero line
     plt.plot(dt_values, dt_error)
     plt.xlabel("dt")
-    plt.ylabel("percent error")
+    plt.ylabel("error")
     plt.title("Convergence plot for dt")
 
     plt.savefig(f"dt_plot.png")
