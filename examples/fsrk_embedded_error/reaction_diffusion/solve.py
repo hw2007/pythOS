@@ -141,8 +141,8 @@ def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False, adapti
             (0,): "RK3"
         }
     ivp_methods = {
-        1: (m.heun_fe, 1e-4, 1e-6),
-        2: (m.sd2_be, 1e-4, 1e-6)
+        1: (m.heun_fe, 1e-6, 1e-8),
+        2: (m.sd2_be, 1e-6, 1e-8)
     }
 
     # Solve !!!
