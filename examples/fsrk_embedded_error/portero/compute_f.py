@@ -58,7 +58,7 @@ sp.pprint(f_factored)
 print("VERIFICATION")
 print("Checking things zero out when moving all to RHS")
  
-X = u_t - (1 + sp.exp(-t)) * x * y * delta_u + u - f
+X = u_t - (1 + sp.exp(-t)) * x * y * lap_u + u - f
 X = sp.simplify(X)
  
 print("X (should be 0):")
