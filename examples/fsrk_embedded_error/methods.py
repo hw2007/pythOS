@@ -44,7 +44,7 @@ A = np.array([
     [-1592/300, -121/60, 564/100, 47/20]
 ])
 
-b_main = [1/10, 1/4, 9/10, 3/4]
-b_embedded = [1, 1, 0, 0]
+b_main = np.array([1/10, 1/4, 9/10, 3/4])
+b_embedded = np.array([1, 1, 0, 0])
 
 portero_2_1 = bt.EmbeddedTableau(c=c, a=A, b=b_main, b_aux=b_embedded, order=1)
