@@ -4,30 +4,75 @@ import additive_rk as ark
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import math
 
 
-GRID_SIZES = 16 # Number of grid points in each dimension.
+N = 16 # Number of grid points in each dimension.
 
 T = 500 # Final time
 
-# Domain of space
-DOMAIN_X = (0, 1)
-DOMAIN_Y = (0, 1)
+u0_list = [[exact(0, x, y) for x in range(N)] for y in range(N)]
+u0 = np.array(u0_list)
 
-# D * delta u
-def diffusion(t, y):
-    dydt = np.zeros(SIZE)
-    # dx^2 is used when computing second derivative
-    dydt[1:-1] = D * (y[2:] - 2*y[1:-1] + y[:-2]) / DX**2
+# Domain used for both x & y
+DOMAIN = (0, 1)
+
+dx = (DOMAIN[1] - DOMAIN[0]) / N
+
+
+# Convert 2D grid -> 1D vector
+def vec(u):
+    return u.reshape(N * N)
+
+
+# Convert 1D vector -> 2D grid
+def grid(u):
+    return u.reshape(N, N)
+
+
+# Compute exact solution for a point
+def exact(t, x, y):
+    a = 3*t * math.exp(-3*t + 1)
+    b = math.sin(math.pi * x**2)
+    c = (math.sin(math.py * y))**2
+    return a*b*c
+
+
+
+def laplacian(u):
+    lap = np.zeros_like(y)
+
+    u_xx = (u[2:, 1:-1] - 2*u[1:-1, 1:-1] + u[:-2, 1:-1]) / dx**2
+    u_yy = (u[1:-1, 2:] - 2*u[1:-1, 1:-1] + u[1:-1, :-2]) / dx**2
     
-    return dydt
+    # Interior points only (not boundaries)
+    
+    lap[1:-1, 1:-1] = u_xx + u_yy
+    
+    return lap
 
-# u(1 - u)
-def reaction(t, y):
-    dydt = np.zeros(SIZE)
-    dydt = y * (1 - y)
 
-    return dydt
+# -(1 + e^-t) * xy * delta u
+# delta u (laplacian) is expected to be pre-computed
+def diffusion(t, x, y, lap):
+    solution = -(1 + math.exp(-t)) * x * y * lap
+    return solution
+
+
+# Very long arbitrary equation
+# Derived from the formulae given in Portero 2012 paper
+# Derived using compute_f.py (simplified solution)
+def f(t, x, y):
+    pi = math.pi
+    # Gross equation
+    solution = 3*(2*pi*t*x*y*((2*pi*x**2*math.sin(pi*x**2) - math.cos(pi*x**2))*math.sin(pi*y)**2 - pi*math.sin(pi*x**2)*math.cos(2*pi*y))*(math.exp(t) + 1) + (1 - 2*t)*math.exp(t)*math.sin(pi*x**2)*math.sin(pi*y)**2)*math.exp(1 - 4*t)
+
+    return solution
+
+
+def subdomain1(t, u_vec):
+    u = grid(u_vec)
+    lap = laplacian(u)
 
 
 operators = [diffusion, reaction]
