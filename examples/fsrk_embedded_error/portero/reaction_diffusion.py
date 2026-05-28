@@ -38,7 +38,6 @@ def exact(t, x, y):
     return a*b*c
 
 
-
 def laplacian(u):
     lap = np.zeros_like(y)
 
@@ -52,10 +51,9 @@ def laplacian(u):
     return lap
 
 
-# -(1 + e^-t) * xy * delta u
-# delta u (laplacian) is expected to be pre-computed
-def diffusion(t, x, y, lap):
-    solution = -(1 + math.exp(-t)) * x * y * lap
+# (1 + e^-t) * xy
+def diffusion(t, x, y):
+    solution = (1 + math.exp(-t)) * x * y
     return solution
 
 
@@ -70,9 +68,36 @@ def f(t, x, y):
     return solution
 
 
+def X1(x, y):
+    def h(z):
+        return 2 ** ((math.exp(2) - 1/z) / (2 * (z-1)))
+    
+    if (x > 0 and x <= 3/16) or (x >= 9/16 and x <= 11/16):
+        return 1
+    elif (x >= 5/16 and x <= 7/16) or (x >= 13/16 and x < 1):
+        return 0
+    elif x > 3/16 and x < 5/16:
+        return h(8*x - 3/2)
+    elif x > 7/16 and x < 9/16:
+        return 1 - h(8*x - 7/2)
+    elif x > 11/16 and x < 13/16:
+        return h(8*x - 11/2)
+
+
+def X2(x, y):
+    return 1 - X1(x, y) 
+
+
 def subdomain1(t, u_vec):
     u = grid(u_vec)
     lap = laplacian(u)
+
+    dudt = zeros_like(u)
+
+    for x in range(DOMAIN[0], DOMAIN[1], dx)
+        dudt[y,x] = X1(x, y) * (diffusion(t, x, y) * lap + u[y,x]) + X1(x, y) * f(t, x, y)
+
+    return dudt
 
 
 operators = [diffusion, reaction]
