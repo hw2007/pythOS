@@ -17,13 +17,13 @@ import math
 
 args = sys.argv[1:]
 
-k0 = 12
+k0 = 1
 
 # Reference values
 dx_ref = 1/20
-dt_ref = 2 ** (-18)
+dt_ref = 2 ** (-16)
 
-k_f = 16 # Final dt value will be 2^(-k_f)
+k_f = 14 # Final dt value will be 2^(-k_f)
 
 # t value to stop sim at
 tf = 1
@@ -128,7 +128,7 @@ if "--plot" in args:
         dt_error = []
         for trial in results:
             diff = ref - trial
-            error = np.max(diff) # Take the highest error value btwn the two discrete spaces
+            error = np.sqrt(np.mean(diff**2))
             dt_error.append(error)
         
         # Plot raw error values

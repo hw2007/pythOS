@@ -96,7 +96,7 @@ def save_animation(csv_file):
 
         return (line,)
 
-    frames = range(0, len(rows), 1) # Animation will take 20 seconds
+    frames = range(0, len(rows), num_steps//(30*20)) # Animation will take 20 seconds
 
     animation = anim.FuncAnimation(
         fig,
@@ -109,7 +109,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False, adaptive=True):
+def solve(fname="results.csv", dx=1/20, dt=0.0005, tf=5, save_result=False, adaptive=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -146,7 +146,7 @@ def solve(fname="results.csv", dx=0.05, dt=1/20, tf=5, save_result=False, adapti
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods=ivp_methods, fname=filename)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "R3", methods, ivp_methods=ivp_methods, fname=filename)
     
     if save_result:
         file = open(fname, "w")

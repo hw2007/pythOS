@@ -110,7 +110,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False, adaptive=True):
+def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adaptive=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -147,7 +147,7 @@ def solve(fname="results.csv", dx=1/100, dt=1/4000, tf=5, save_result=False, ada
     }
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "Strang", methods, ivp_methods=ivp_methods, fname=filename)
+    result = fs.fractional_step(operators, dt, y0, t0, tf, "R3", methods, fname=filename)
     
     if save_result:
         file = open(fname, "w")
