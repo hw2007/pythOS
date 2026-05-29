@@ -1,6 +1,6 @@
 # Equation: reaction-diffusion, u_t = D delta u + f(u)
 
-import fractional_step as fs
+import additive_rk as ark
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
@@ -133,20 +133,12 @@ def solve(fname="results.csv", dx=1/20, dt=0.0005, tf=5, save_result=False, adap
 
     operators = [diffusion, reaction]
     if adaptive:
-        methods = {
-            (0,): "ADAPTIVE"
-        }
+        methods = [m.heun_fe, m.sd2_be]
     else:
-        methods = {
-            (0,): "RK3"
-        }
-    ivp_methods = {
-        1: (m.portero_2_1, 1e-6, 1e-8),
-        2: (m.portero_2_1, 1e-6, 1e-8)
-    }
+        methods = [m.rk3, m.rk3]
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "R3", methods, ivp_methods=ivp_methods, fname=filename)
+    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=fname, rtol=1e-4, atol=1e-6)
     
     if save_result:
         file = open(fname, "w")

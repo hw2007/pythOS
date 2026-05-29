@@ -1,6 +1,21 @@
 import butcher_tableau as bt
 import numpy as np
 
+# RK3
+
+c3 = np.array([0, 1/2, 1])
+
+A3 = np.array([
+    [0, 0, 0],
+    [1/2, 0, 0],
+    [-1, 2, 0]
+])
+
+b3 = np.array([1/6, 2/3, 1/6])
+
+rk3 = bt.Tableau(c=c3, a=A3, b=b3)
+
+
 # HEUN'S METHOD W/ EMBEDDED FORWARD EULER (EXPLICIT)
 
 c_heun = np.array([0, 1])

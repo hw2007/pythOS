@@ -1,6 +1,6 @@
 # Equation: viscous Burgers, u_t = ν u_xx - 1/2 * (u^2)_x
 
-import fractional_step as fs
+import additive_rk as ark
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
@@ -134,20 +134,12 @@ def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adapt
 
     operators = [viscosity, convection]
     if adaptive:
-        methods = {
-            (0,): "ADAPTIVE"
-        }
+        methods = [m.heun_fe, m.sd2_be]
     else:
-        methods = {
-            (0,): "RK3"
-        }
-    ivp_methods = {
-        1: (m.heun_fe, 1e-4, 1e-6),
-        2: (m.sd2_be, 1e-4, 1e-6)
-    }
+        methods = [m.rk3, m.rk3]
 
     # Solve !!!
-    result = fs.fractional_step(operators, dt, y0, t0, tf, "R3", methods, fname=filename)
+    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=fname, rtol=1e-4, atol=1e-6)
     
     if save_result:
         file = open(fname, "w")
