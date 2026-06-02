@@ -110,7 +110,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adaptive=False):
+def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adaptive=True):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -134,7 +134,7 @@ def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adapt
 
     operators = [viscosity, convection]
     if adaptive:
-        methods = [m.heun_fe, m.sd2_be]
+        methods = [m.portero_3_2, m.portero_3_2]
     else:
         methods = [m.rk3, m.rk3]
 

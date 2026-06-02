@@ -1,48 +1,104 @@
 # Equation: reaction-diffusion, u_t = D delta u + f(u)
 
-import additive_rk as ark
+import fractional_step as fs
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
 import time
-import methods as m
+from math import *
 
 
-# Temporary values
-dx = 1/32 # space between points. Passed to solve() and then set.
-
+Nx = 100 # No. points in space
 # Min and max values of space
-LIMITS = (0, 1)
-N = int((LIMITS[1] - LIMITS[0]) / dx) # No. of points in space
+DOMAIN = (-100, 0)
 
-# Diffusion coefficient
-D = 1
+dx = (DOMAIN[1] - DOMAIN[0]) / Nx
 
-# Create wavefront
-x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
-y0 = 1 / (1 + np.exp(x / np.sqrt(6)))**2
+# Diffusion coefficient kappa (using K instead of actual kappa for ease of typing)
+K = 1e-2
 
 # Configure timestepping
+dt = 0.5
 t0 = 0
-tf = 1
+tf = 5
 
 num_steps = int(tf / dt)
 
-# D * delta u
+# NPZD Params
+u = 0.8
+mP = 0.05
+g = 1.2
+kN = 0.3
+kP = 0.3
+B = 0.7
+mZ = 0.03
+rD = 0.04
+
+# NPZD Init
+x = np.array([DOMAIN[0] + (k + 0.5) * dx for k in range(Nx)])
+
+N = [2.0 + 0.3*sin(2*pi*(k/Nx)) for k in range(0,Nx)]
+P = [0.15 + 0.07*exp(x[k]/25) for k in range(0,Nx)]
+Z = [0.10 + 0.02*exp(x[k]/25) for k in range(0,Nx)]
+D = [0.05 for k in range(0,Nx)]
+
+c0 = np.concatenate([N, P, Z, D])
+
+
+def slice(c):
+    """
+    Takes a 1D np.array, c, and splits it into 4 quarters and outputs the quarters (as lists).
+    """
+    i = len(c)//4
+    N = c[0:i]
+    P = c[i:i*2]
+    Z = c[i*2:i*3]
+    D = c[i*3:i*4]
+
+    return N, P, Z, D
+
+
 def diffusion(t, c):
-    dcdt = np.zeros(N)
-    # dx^2 is used when computing second derivative
-    for k in range(1, len(c)-1):
-        dcdt[k] = D * (c[k+1] - 2*c[k] + c[k-1]) / dx**2
+    slices = slice(c)
+    dSlices = []
+
+    for u in slices:
+        dudt = np.zeros_like(u)
+        for k in range(1, len(u)-1):
+            # dx^2 is used when computing second derivative
+            dudt[k] = K * (u[k+1] - 2*u[k] + u[k-1]) / dx**2
+        dSlices.append(dudt)
     
+    dcdt = np.concatenate(dSlices)
     return dcdt
 
-# u(1 - u)
-def reaction(t, y):
-    dydt = np.zeros(SIZE)
-    dydt = y * (1 - y)
 
-    return dydt
+def reaction(t, c):
+    N, P, Z, D = slice(c)
+
+    uptake = u * P * N / (kN + N)
+
+    grazing = g * Z * P / (kP + P)
+
+    dN = -uptake
+    dP = uptake
+
+    dP -= grazing
+    dZ = B * grazing
+    dD = (1 - B) * grazing + mP * P
+
+    mortZ = mZ * Z
+    dZ -= mortZ
+    dD += mortZ
+
+    remin = rD * D
+    dD -= remin
+    dN += remin
+
+    dcdt = np.concatenate([dN, dP, dZ, dD])
+
+    return dcdt
+
 
 # Plot one single state of the sim
 def snapshot(idx, csv_file):
@@ -59,7 +115,7 @@ def snapshot(idx, csv_file):
 
     y_vals = get_snapshot(csv_file, idx)
 
-    # Plot it!
+    # Plot it!pythOS-source/examples/npzd
     plt.figure()
     plt.plot(x, y_vals)
     plt.xlabel("x")
@@ -130,13 +186,16 @@ def plot(fname="results.csv"):
 
 # Solve !!!
 operators = [diffusion, reaction]
-methods = [m.heun_fe, m.sd2_be]
+methods = {
+    (1,): "RK3",
+    (2,): "RK3"
+}
 
 start_time = time.perf_counter()
 print("Beginning solve...")
 
-result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname="results.csv", rtol=1e-4, atol=1e-6)
+result = fs.fractional_step(operators, dt, c0, t0, tf, "Strang", methods, fname="results.csv")
 
 end_time = time.perf_counter()
 print(f"DONE! Solved in {end_time - start_time} seconds.")
-plot()
+#plot()
