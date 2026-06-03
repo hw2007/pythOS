@@ -198,4 +198,6 @@ result = fs.fractional_step(operators, dt, c0, t0, tf, "Strang", methods, fname=
 
 end_time = time.perf_counter()
 print(f"DONE! Solved in {end_time - start_time} seconds.")
-#plot()
+
+print(f"Sum = {sum(result)}")
+print(f"Min = {min(result)}")
