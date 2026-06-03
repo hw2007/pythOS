@@ -134,7 +134,7 @@ def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adapt
 
     operators = [viscosity, convection]
     if adaptive:
-        methods = [m.portero_3_2, m.portero_3_2]
+        methods = [m.portero_4_3, m.portero_4_3]
     else:
         methods = [m.rk3, m.rk3]
 
@@ -164,6 +164,6 @@ def plot(fname="results.csv"):
 
 if __name__ == "__main__":
     print("Beginning solve...")
-    solve()
+    solve(dt=1/10)
     print("DONE!")
-    plot()
+    #plot()
