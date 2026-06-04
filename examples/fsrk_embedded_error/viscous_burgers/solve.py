@@ -110,7 +110,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adaptive=True):
+def solve(fname="results.csv", N=1200, dt=1e-3, tf=5, save_result=False, methods=[m.rk3, m.rk3]):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -120,8 +120,8 @@ def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adapt
     else: filename = fname
 
     # Configure discrete space
-    DX = dx
-    SIZE = int((LIMITS[1] - LIMITS[0]) / DX)
+    DX = (LIMITS[1] - LIMITS[0]) / N
+    SIZE = N
 
     # Create gaussian bump
     x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
@@ -133,13 +133,9 @@ def solve(fname="results.csv", dx=1/100, dt=1e-3, tf=5, save_result=False, adapt
     num_steps = int(tf / dt)
 
     operators = [viscosity, convection]
-    if adaptive:
-        methods = [m.portero_4_3, m.portero_4_3]
-    else:
-        methods = [m.rk3, m.rk3]
 
     # Solve !!!
-    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=fname, rtol=1e-4, atol=1e-6)
+    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=1e-4, atol=1e-6)
     
     if save_result:
         file = open(fname, "w")

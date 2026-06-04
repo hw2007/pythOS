@@ -109,7 +109,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", dx=1/20, dt=0.0005, tf=5, save_result=False, adaptive=False):
+def solve(fname="results.csv", N=800, dt=0.0005, tf=5, save_result=False, methods=[m.rk3, m.rk3]):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -119,8 +119,8 @@ def solve(fname="results.csv", dx=1/20, dt=0.0005, tf=5, save_result=False, adap
     else: filename = fname
 
     # Configure discrete space
-    DX = dx
-    SIZE = int((LIMITS[1] - LIMITS[0]) / DX)
+    DX = (LIMITS[1] - LIMITS[0]) / N
+    SIZE = N
 
     # Create wavefront
     x = np.linspace(LIMITS[0], LIMITS[1], SIZE)
@@ -132,13 +132,9 @@ def solve(fname="results.csv", dx=1/20, dt=0.0005, tf=5, save_result=False, adap
     num_steps = int(tf / dt)
 
     operators = [diffusion, reaction]
-    if adaptive:
-        methods = [m.heun_fe, m.sd2_be]
-    else:
-        methods = [m.rk3, m.rk3]
 
     # Solve !!!
-    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=fname, rtol=1e-4, atol=1e-6)
+    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=1e-4, atol=1e-6)
     
     if save_result:
         file = open(fname, "w")

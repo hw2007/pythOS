@@ -1,6 +1,7 @@
 import fractional_step as fs
 import time
 import numpy as np
+import methods as m
 
 # Define parameters: mass of Earth & Moon
 moon = 0.012277471
@@ -16,8 +17,8 @@ Y0 = np.array([x0, y0, x_prime0, y_prime0], dtype=float)
 
 # Time
 t0 = 0
-tf = 17.06521656015796 * 2
-dt = 1/5000
+tf = 17.06521656015796
+dt = 1/500
 
 def drift(t, Y):
     x, y, x_prime, y_prime = Y
@@ -37,15 +38,19 @@ def kick(t, Y):
 
 operators = [drift, kick]
 methods = {
-    (0,): "", # Default
-    (1,): "RK4",
-    (2,): "RK4"
+    (0,): "ADAPTIVE",
+}
+ivp_methods={
+    1: (m.heun_fe, 1e-10, 1e-12),
+    2: (m.heun_fe, 1e-10, 1e-12)
 }
 
 print("BEGINNING SOLVE!")
 start_time = time.perf_counter()
 
-result = fs.fractional_step(operators, dt, Y0, t0, tf, "Strang", methods, fname="results.csv")
+result = fs.fractional_step(operators, dt, Y0, t0, tf, "Strang", methods, ivp_methods=ivp_methods, fname="results.csv")
 
 end_time = time.perf_counter()
 print(f"DONE! Solved in {end_time - start_time} seconds.")
+
+import plot
