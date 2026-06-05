@@ -110,7 +110,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", N=1200, dt=1e-3, tf=5, save_result=False, methods=[m.rk3, m.rk3]):
+def solve(fname="results.csv", N=1200, dt=1e-3, tf=5, save_result=False, methods=[m.rk3, m.rk3], track_rejects=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -135,7 +135,7 @@ def solve(fname="results.csv", N=1200, dt=1e-3, tf=5, save_result=False, methods
     operators = [viscosity, convection]
 
     # Solve !!!
-    result = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=1e-4, atol=1e-6)
+    result, rejects = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=1e-4, atol=1e-6, track_rejects=True)
     
     if save_result:
         file = open(fname, "w")
@@ -145,7 +145,10 @@ def solve(fname="results.csv", N=1200, dt=1e-3, tf=5, save_result=False, methods
         file.write(string + "\n")
         file.close()
 
-    return result
+    if track_rejects:
+        return result, rejects
+    else:
+        return result
 
 def plot(fname="results.csv"):
     # PLOTTING
