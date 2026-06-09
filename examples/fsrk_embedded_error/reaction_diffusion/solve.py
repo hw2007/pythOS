@@ -4,7 +4,7 @@ import additive_rk as ark
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 import numpy as np
-import time
+import time, sys
 import methods as m
 
 
@@ -95,8 +95,8 @@ def save_animation(csv_file):
         ax.set_title(f"Discrete Space at t = {t:.3f}")
 
         return (line,)
-
-    frames = range(0, len(rows), num_steps//(30*20)) # Animation will take 20 seconds
+    print()
+    frames = range(0, len(rows), 1) # Animation will take 20 seconds
 
     animation = anim.FuncAnimation(
         fig,
@@ -109,7 +109,7 @@ def save_animation(csv_file):
 
     plt.close()
 
-def solve(fname="results.csv", N=800, dt=0.0005, tf=5, save_result=False, methods=[m.rk3, m.rk3], track_rejects=False):
+def solve(fname="results.csv", N=800, dt=0.0005, tf=5, rtol=1e-4, atol=1e-6, save_result=False, methods=[m.portero_4_3_part1, m.portero_4_3_part2], track_rejects=False, skip=False):
     # Solve the PDE!
     # save_result: if True, only save the last step in the simulation. Otherwise save everything.
         
@@ -134,36 +134,35 @@ def solve(fname="results.csv", N=800, dt=0.0005, tf=5, save_result=False, method
     operators = [diffusion, reaction]
 
     # Solve !!!
-    result, rejects = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=1e-4, atol=1e-6, track_rejects=True)
-    
-    if save_result:
-        file = open(fname, "w")
-        string = result[0]
-        for i in result[1:]:
-            string = f"{string},{i}"
-        file.write(string + "\n")
-        file.close()
+    if not skip:
+        result, rejects = ark.ark_solve(operators, dt, y0, t0, tf, methods, fname=filename, rtol=rtol, atol=atol, track_rejects=True)
+        
+        if save_result:
+            file = open(fname, "w")
+            string = result[0]
+            for i in result[1:]:
+                string = f"{string},{i}"
+            file.write(string + "\n")
+            file.close()
 
-    if track_rejects:
-        return result, rejects
-    else:
-        return result
+        if track_rejects:
+            return result, rejects
+        else:
+            return result
 
 def plot(fname="results.csv"):
     # PLOTTING
-    print("Plotting...")
-    snapshot(0, fname)
-    snapshot(num_steps//4, fname)
-    snapshot(num_steps//2, fname)
-    snapshot(num_steps//4*3, fname)
-    snapshot(num_steps, fname)
     print("Creating animation...")
     save_animation(fname)
 
 if __name__ == "__main__":
+    args = sys.argv[1:]
+
     print("Beginning solve...")
     start_time = time.perf_counter()
-    solve()
+    solve(skip=(not "--sim" in args), tf=5)
     end_time = time.perf_counter()
     print(f"DONE! Solved in {end_time - start_time} seconds.")
-    plot()
+
+    if "--plot" in args:
+        plot()

@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 import math
+import methods as m
 
 
 args = sys.argv[1:]
@@ -20,7 +21,7 @@ args = sys.argv[1:]
 k0 = 1
 
 # Reference values
-dx_ref = 1/20
+N_ref = 800
 dt_ref = 2 ** (-16)
 
 k_f = 14 # Final dt value will be 2^(-k_f)
@@ -30,15 +31,15 @@ tf = 1
 
 if "--adaptive" in args:
     adaptive = True
-    method = "adaptive"
+    methods = [m.heun_fe, m.sd2_be]
 else:
     adaptive = False
-    method = "fixed"
+    methods = [m.rk3, m.rk3]
 
 if "--sim" in args:
     def simulate(solver, problem_str):
         print("=== Generating reference ===")
-        solver.solve(fname=f"{problem_str}_reference_{method}.csv", dx=dx_ref, dt=dt_ref, tf=tf, save_result=True, adaptive=False)
+        solver.solve(fname=f"{problem_str}_reference.csv", N=N_ref, dt=dt_ref, tf=tf, save_result=True, methods=[m.rk3, m.rk3])
         print("Done!")
 
         def write_file(fname, states):
@@ -54,12 +55,12 @@ if "--sim" in args:
         print("=== Beginning trials ===")
 
         final_states = []
-        dx = dx_ref
+        N = N_ref
         for k in range(k0, k_f):
             dt = 2 ** (-k)
-            print(f"Trial with dx={dx}, dt={dt}")
+            print(f"Trial with N={N}, dt={dt}")
             # Solve PDE for this dt value
-            result = solver.solve(fname=None, dx=dx, dt=dt, tf=tf, adaptive=adaptive) 
+            result = solver.solve(fname=None, N=N, dt=dt, tf=tf, methods=methods) 
             # If this condition is false, then the solve blew up to infinity due to a large dt
             if not np.any(np.isnan(result)):
                 dt_marker = np.array([dt]) # Put the inverse dt & the result together so they can be plotted later
@@ -68,7 +69,7 @@ if "--sim" in args:
                 print("Error, dt is likely too large.")
     
         # Save trials results
-        write_file(f"{problem_str}_trials_{method}.csv", final_states)
+        write_file(f"{problem_str}_trials.csv", final_states)
 
     if "vb" in args:
         from viscous_burgers import solve as vb
@@ -121,8 +122,8 @@ if "--plot" in args:
         return values, results
     
     for p in problems:
-        ref = get_ref_data(f"{p}_reference_{method}.csv")
-        dt_values, results = get_trial_results(f"{p}_trials_{method}.csv")
+        ref = get_ref_data(f"{p}_reference.csv")
+        dt_values, results = get_trial_results(f"{p}_trials.csv")
         
         # Calculate relative L2 error for each trial (comparing to reference)
         dt_error = []
@@ -139,7 +140,7 @@ if "--plot" in args:
         plt.ylabel("error")
         plt.title(f"Raw error plot for {p} problem")
 
-        plt.savefig(f"{p}_raw_error_{method}.png")
+        plt.savefig(f"{p}_raw_error.png")
 
         # Plot log vs log
         log_dt = [math.log2(dt) for dt in dt_values]
@@ -164,6 +165,6 @@ if "--plot" in args:
         plt.ylabel("log2(error)")
         plt.title(f"Convergence plot for {p} problem")
 
-        plt.savefig(f"{p}_convergence_{method}.png")
+        plt.savefig(f"{p}_convergence.png")
 
 
